@@ -1159,8 +1159,100 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
             if let endDate = activity.endDate {
                 payload["end"] = Int(endDate.timeIntervalSince1970 * 1000)
             }
+            if let metrics = collectActivityMetrics(for: activity) {
+                for (key, value) in metrics {
+                    payload[key] = value
+                }
+            }
             return payload
         }
+    }
+
+    @available(iOS 16.0, *)
+    private func collectActivityMetrics(for activity: HKWorkoutActivity) -> [String: Any]? {
+        var metrics: [String: Any] = [:]
+        
+        if let distance = activityDistanceMeters(activity) {
+            metrics["distance_m"] = distance
+        }
+        if let energy = activityEnergyKilocalories(activity) {
+            metrics["energy_kcal"] = energy
+        }
+        if let heartRate = activityAverageHeartRate(activity) {
+            metrics["avg_hr_bpm"] = heartRate
+        }
+        if let swolf = averageSwolfScore(from: activity.workoutEvents) {
+            metrics["avg_swolf"] = swolf
+        }
+        if let distance = metrics["distance_m"] as? Double, distance > 0 {
+            metrics["pace_per_100_s"] = (activity.duration / distance) * 100.0
+        }
+        
+        return metrics.isEmpty ? nil : metrics
+    }
+    
+    @available(iOS 16.0, *)
+    private func activityDistanceMeters(_ activity: HKWorkoutActivity) -> Double? {
+        let distanceTypes: [HKQuantityTypeIdentifier] = [
+            .distanceSwimming,
+            .distanceWalkingRunning,
+            .distanceCycling,
+            .distanceDownhillSnowSports,
+            .distanceWheelchair
+        ]
+        for identifier in distanceTypes {
+            if let value = quantitySum(for: activity, identifier: identifier, unit: HKUnit.meter()) {
+                return value
+            }
+        }
+        return nil
+    }
+    
+    @available(iOS 16.0, *)
+    private func activityEnergyKilocalories(_ activity: HKWorkoutActivity) -> Double? {
+        return quantitySum(for: activity, identifier: .activeEnergyBurned, unit: HKUnit.kilocalorie())
+    }
+    
+    @available(iOS 16.0, *)
+    private func activityAverageHeartRate(_ activity: HKWorkoutActivity) -> Double? {
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
+              let stats = activity.statistics(for: heartRateType),
+              let avgQuantity = stats.averageQuantity() else {
+            return nil
+        }
+        let bpmUnit = HKUnit.count().unitDivided(by: HKUnit.minute())
+        return avgQuantity.doubleValue(for: bpmUnit)
+    }
+    
+    @available(iOS 16.0, *)
+    private func quantitySum(for activity: HKWorkoutActivity,
+                             identifier: HKQuantityTypeIdentifier,
+                             unit: HKUnit) -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier),
+              let stats = activity.statistics(for: type),
+              let sumQuantity = stats.sumQuantity() else {
+            return nil
+        }
+        return sumQuantity.doubleValue(for: unit)
+    }
+
+    private func averageSwolfScore(from events: [HKWorkoutEvent]?) -> Double? {
+        guard let events = events, !events.isEmpty else { return nil }
+        var weightedSum: Double = 0
+        var totalWeight: Double = 0
+        
+        for event in events {
+            guard let metadata = event.metadata,
+                  let swolfValue = metadata["HKSWOLFScore"] as? NSNumber else {
+                continue
+            }
+            let duration = max(event.dateInterval.duration, 1)
+            weightedSum += swolfValue.doubleValue * duration
+            totalWeight += duration
+        }
+        
+        guard totalWeight > 0 else { return nil }
+        return weightedSum / totalWeight
     }
     
     private func serializeWorkoutConfiguration(_ configuration: HKWorkoutConfiguration) -> [String: Any] {
