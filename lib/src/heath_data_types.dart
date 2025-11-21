@@ -1,961 +1,616 @@
 part of '../health.dart';
 
-/// An abstract class for health values.
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class HealthValue extends Serializable {
-  HealthValue();
+/// This file only defines HealthDataType/HealthDataUnit helpers.
+/// The reusable `HealthValue` hierarchy is implemented in
+/// `health_value_types.dart` to avoid duplicate declarations.
 
-  @override
-  Function get fromJsonFunction => _$HealthValueFromJson;
-  factory HealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<HealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$HealthValueToJson(this);
+/// List of all available health data types.
+enum HealthDataType {
+  ACTIVE_ENERGY_BURNED,
+  ATRIAL_FIBRILLATION_BURDEN,
+  AUDIOGRAM,
+  BASAL_ENERGY_BURNED,
+  BLOOD_GLUCOSE,
+  BLOOD_OXYGEN,
+  BLOOD_PRESSURE_DIASTOLIC,
+  BLOOD_PRESSURE_SYSTOLIC,
+  BODY_FAT_PERCENTAGE,
+  LEAN_BODY_MASS,
+  BODY_MASS_INDEX,
+  BODY_TEMPERATURE,
+  BODY_WATER_MASS,
+  DIETARY_CARBS_CONSUMED,
+  DIETARY_CAFFEINE,
+  DIETARY_ENERGY_CONSUMED,
+  DIETARY_FATS_CONSUMED,
+  DIETARY_PROTEIN_CONSUMED,
+  DIETARY_FIBER,
+  DIETARY_SUGAR,
+  DIETARY_FAT_MONOUNSATURATED,
+  DIETARY_FAT_POLYUNSATURATED,
+  DIETARY_FAT_SATURATED,
+  DIETARY_CHOLESTEROL,
+  DIETARY_VITAMIN_A,
+  DIETARY_THIAMIN,
+  DIETARY_RIBOFLAVIN,
+  DIETARY_NIACIN,
+  DIETARY_PANTOTHENIC_ACID,
+  DIETARY_VITAMIN_B6,
+  DIETARY_BIOTIN,
+  DIETARY_VITAMIN_B12,
+  DIETARY_VITAMIN_C,
+  DIETARY_VITAMIN_D,
+  DIETARY_VITAMIN_E,
+  DIETARY_VITAMIN_K,
+  DIETARY_FOLATE,
+  DIETARY_CALCIUM,
+  DIETARY_CHLORIDE,
+  DIETARY_IRON,
+  DIETARY_MAGNESIUM,
+  DIETARY_PHOSPHORUS,
+  DIETARY_POTASSIUM,
+  DIETARY_SODIUM,
+  DIETARY_ZINC,
+  DIETARY_CHROMIUM,
+  DIETARY_COPPER,
+  DIETARY_IODINE,
+  DIETARY_MANGANESE,
+  DIETARY_MOLYBDENUM,
+  DIETARY_SELENIUM,
+  FORCED_EXPIRATORY_VOLUME,
+  HEART_RATE,
+  HEART_RATE_VARIABILITY_SDNN,
+  HEART_RATE_VARIABILITY_RMSSD,
+  HEIGHT,
+  INSULIN_DELIVERY,
+  RESTING_HEART_RATE,
+  RESPIRATORY_RATE,
+  PERIPHERAL_PERFUSION_INDEX,
+  STEPS,
+  WAIST_CIRCUMFERENCE,
+  WALKING_HEART_RATE,
+  WEIGHT,
+  DISTANCE_WALKING_RUNNING,
+  DISTANCE_SWIMMING,
+  DISTANCE_CYCLING,
+  FLIGHTS_CLIMBED,
+  DISTANCE_DELTA,
+  MINDFULNESS,
+  WATER,
+  SLEEP_ASLEEP,
+  SLEEP_AWAKE_IN_BED,
+  SLEEP_AWAKE,
+  SLEEP_DEEP,
+  SLEEP_IN_BED,
+  SLEEP_LIGHT,
+  SLEEP_OUT_OF_BED,
+  SLEEP_REM,
+  SLEEP_SESSION,
+  SLEEP_UNKNOWN,
+  EXERCISE_TIME,
+  WORKOUT,
+  HEADACHE_NOT_PRESENT,
+  HEADACHE_MILD,
+  HEADACHE_MODERATE,
+  HEADACHE_SEVERE,
+  HEADACHE_UNSPECIFIED,
+  NUTRITION,
+  UV_INDEX,
+  // HealthKit Characteristics
+  GENDER,
+  BIRTH_DATE,
+  BLOOD_TYPE,
+  MENSTRUATION_FLOW,
+  WATER_TEMPERATURE,
+  UNDERWATER_DEPTH,
+
+  // Heart Rate events (specific to Apple Watch)
+  HIGH_HEART_RATE_EVENT,
+  LOW_HEART_RATE_EVENT,
+  IRREGULAR_HEART_RATE_EVENT,
+  ELECTRODERMAL_ACTIVITY,
+  ELECTROCARDIOGRAM,
+
+  // Health Connect
+  TOTAL_CALORIES_BURNED
 }
 
-/// A numerical value from Apple HealthKit or Google Health Connect
-/// such as integer or double. E.g. 1, 2.9, -3
-///
-/// Parameters:
-/// * [numericValue] - a [num] value for the [HealthDataPoint]
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class NumericHealthValue extends HealthValue {
-  /// A [num] value for the [HealthDataPoint].
-  num numericValue;
-
-  NumericHealthValue({required this.numericValue});
-
-  /// Create a [NumericHealthValue] based on a health data point from native data format.
-  factory NumericHealthValue.fromHealthDataPoint(dynamic dataPoint) =>
-      NumericHealthValue(numericValue: dataPoint['value'] as num? ?? 0);
-
-  @override
-  String toString() => '$runtimeType - numericValue: $numericValue';
-
-  @override
-  Function get fromJsonFunction => _$NumericHealthValueFromJson;
-  factory NumericHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<NumericHealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$NumericHealthValueToJson(this);
-
-  @override
-  bool operator ==(Object other) =>
-      other is NumericHealthValue && numericValue == other.numericValue;
-
-  @override
-  int get hashCode => numericValue.hashCode;
+/// Access types for Health Data.
+enum HealthDataAccess {
+  READ,
+  WRITE,
+  READ_WRITE,
 }
 
-/// A [HealthValue] object for audiograms
-///
-/// Parameters:
-/// * [frequencies] - array of frequencies of the test
-/// * [leftEarSensitivities] threshold in decibel for the left ear
-/// * [rightEarSensitivities] threshold in decibel for the left ear
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class AudiogramHealthValue extends HealthValue {
-  /// Array of frequencies of the test.
-  List<num> frequencies;
+/// List of data types available on iOS.
+const List<HealthDataType> dataTypeKeysIOS = [
+  HealthDataType.ACTIVE_ENERGY_BURNED,
+  HealthDataType.ATRIAL_FIBRILLATION_BURDEN,
+  HealthDataType.AUDIOGRAM,
+  HealthDataType.BASAL_ENERGY_BURNED,
+  HealthDataType.BLOOD_GLUCOSE,
+  HealthDataType.BLOOD_OXYGEN,
+  HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
+  HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
+  HealthDataType.BODY_FAT_PERCENTAGE,
+  HealthDataType.LEAN_BODY_MASS,
+  HealthDataType.BODY_MASS_INDEX,
+  HealthDataType.BODY_TEMPERATURE,
+  HealthDataType.DIETARY_CARBS_CONSUMED,
+  HealthDataType.DIETARY_CAFFEINE,
+  HealthDataType.DIETARY_ENERGY_CONSUMED,
+  HealthDataType.DIETARY_FATS_CONSUMED,
+  HealthDataType.DIETARY_PROTEIN_CONSUMED,
+  HealthDataType.DIETARY_FIBER,
+  HealthDataType.DIETARY_SUGAR,
+  HealthDataType.DIETARY_FAT_MONOUNSATURATED,
+  HealthDataType.DIETARY_FAT_POLYUNSATURATED,
+  HealthDataType.DIETARY_FAT_SATURATED,
+  HealthDataType.DIETARY_CHOLESTEROL,
+  HealthDataType.DIETARY_VITAMIN_A,
+  HealthDataType.DIETARY_THIAMIN,
+  HealthDataType.DIETARY_RIBOFLAVIN,
+  HealthDataType.DIETARY_NIACIN,
+  HealthDataType.DIETARY_PANTOTHENIC_ACID,
+  HealthDataType.DIETARY_VITAMIN_B6,
+  HealthDataType.DIETARY_BIOTIN,
+  HealthDataType.DIETARY_VITAMIN_B12,
+  HealthDataType.DIETARY_VITAMIN_C,
+  HealthDataType.DIETARY_VITAMIN_D,
+  HealthDataType.DIETARY_VITAMIN_E,
+  HealthDataType.DIETARY_VITAMIN_K,
+  HealthDataType.DIETARY_FOLATE,
+  HealthDataType.DIETARY_CALCIUM,
+  HealthDataType.DIETARY_CHLORIDE,
+  HealthDataType.DIETARY_IRON,
+  HealthDataType.DIETARY_MAGNESIUM,
+  HealthDataType.DIETARY_PHOSPHORUS,
+  HealthDataType.DIETARY_POTASSIUM,
+  HealthDataType.DIETARY_SODIUM,
+  HealthDataType.DIETARY_ZINC,
+  HealthDataType.DIETARY_CHROMIUM,
+  HealthDataType.DIETARY_COPPER,
+  HealthDataType.DIETARY_IODINE,
+  HealthDataType.DIETARY_MANGANESE,
+  HealthDataType.DIETARY_MOLYBDENUM,
+  HealthDataType.DIETARY_SELENIUM,
+  HealthDataType.ELECTRODERMAL_ACTIVITY,
+  HealthDataType.FORCED_EXPIRATORY_VOLUME,
+  HealthDataType.HEART_RATE,
+  HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+  HealthDataType.HEIGHT,
+  HealthDataType.INSULIN_DELIVERY,
+  HealthDataType.HIGH_HEART_RATE_EVENT,
+  HealthDataType.IRREGULAR_HEART_RATE_EVENT,
+  HealthDataType.LOW_HEART_RATE_EVENT,
+  HealthDataType.RESTING_HEART_RATE,
+  HealthDataType.RESPIRATORY_RATE,
+  HealthDataType.PERIPHERAL_PERFUSION_INDEX,
+  HealthDataType.STEPS,
+  HealthDataType.WAIST_CIRCUMFERENCE,
+  HealthDataType.WALKING_HEART_RATE,
+  HealthDataType.WEIGHT,
+  HealthDataType.FLIGHTS_CLIMBED,
+  HealthDataType.DISTANCE_WALKING_RUNNING,
+  HealthDataType.DISTANCE_SWIMMING,
+  HealthDataType.DISTANCE_CYCLING,
+  HealthDataType.MINDFULNESS,
+  HealthDataType.SLEEP_ASLEEP,
+  HealthDataType.SLEEP_AWAKE,
+  HealthDataType.SLEEP_DEEP,
+  HealthDataType.SLEEP_IN_BED,
+  HealthDataType.SLEEP_LIGHT,
+  HealthDataType.SLEEP_REM,
+  HealthDataType.WATER,
+  HealthDataType.EXERCISE_TIME,
+  HealthDataType.WORKOUT,
+  HealthDataType.HEADACHE_NOT_PRESENT,
+  HealthDataType.HEADACHE_MILD,
+  HealthDataType.HEADACHE_MODERATE,
+  HealthDataType.HEADACHE_SEVERE,
+  HealthDataType.HEADACHE_UNSPECIFIED,
+  HealthDataType.ELECTROCARDIOGRAM,
+  HealthDataType.NUTRITION,
+  HealthDataType.GENDER,
+  HealthDataType.BIRTH_DATE,
+  HealthDataType.BLOOD_TYPE,
+  HealthDataType.MENSTRUATION_FLOW,
+  HealthDataType.WATER_TEMPERATURE,
+  HealthDataType.UNDERWATER_DEPTH,
+  HealthDataType.UV_INDEX,
+  HealthDataType.TOTAL_CALORIES_BURNED,
+];
 
-  /// Threshold in decibel for the left ear.
-  List<num> leftEarSensitivities;
+/// List of data types available on Android
+const List<HealthDataType> dataTypeKeysAndroid = [
+  HealthDataType.ACTIVE_ENERGY_BURNED,
+  HealthDataType.BLOOD_GLUCOSE,
+  HealthDataType.BLOOD_OXYGEN,
+  HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
+  HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
+  HealthDataType.BODY_FAT_PERCENTAGE,
+  HealthDataType.LEAN_BODY_MASS,
+  HealthDataType.BODY_MASS_INDEX,
+  HealthDataType.BODY_TEMPERATURE,
+  HealthDataType.BODY_WATER_MASS,
+  HealthDataType.HEART_RATE,
+  HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+  HealthDataType.HEIGHT,
+  HealthDataType.STEPS,
+  HealthDataType.WEIGHT,
+  HealthDataType.DISTANCE_DELTA,
+  HealthDataType.SLEEP_ASLEEP,
+  HealthDataType.SLEEP_AWAKE_IN_BED,
+  HealthDataType.SLEEP_AWAKE,
+  HealthDataType.SLEEP_DEEP,
+  HealthDataType.SLEEP_LIGHT,
+  HealthDataType.SLEEP_OUT_OF_BED,
+  HealthDataType.SLEEP_REM,
+  HealthDataType.SLEEP_SESSION,
+  HealthDataType.SLEEP_UNKNOWN,
+  HealthDataType.WATER,
+  HealthDataType.WORKOUT,
+  HealthDataType.RESTING_HEART_RATE,
+  HealthDataType.FLIGHTS_CLIMBED,
+  HealthDataType.BASAL_ENERGY_BURNED,
+  HealthDataType.RESPIRATORY_RATE,
+  HealthDataType.NUTRITION,
+  HealthDataType.TOTAL_CALORIES_BURNED,
+  HealthDataType.MENSTRUATION_FLOW,
+];
 
-  /// Threshold in decibel for the right ear.
-  List<num> rightEarSensitivities;
+/// Maps a [HealthDataType] to a [HealthDataUnit].
+const Map<HealthDataType, HealthDataUnit> dataTypeToUnit = {
+  HealthDataType.ACTIVE_ENERGY_BURNED: HealthDataUnit.KILOCALORIE,
+  HealthDataType.ATRIAL_FIBRILLATION_BURDEN: HealthDataUnit.PERCENT,
+  HealthDataType.AUDIOGRAM: HealthDataUnit.DECIBEL_HEARING_LEVEL,
+  HealthDataType.BASAL_ENERGY_BURNED: HealthDataUnit.KILOCALORIE,
+  HealthDataType.BLOOD_GLUCOSE: HealthDataUnit.MILLIGRAM_PER_DECILITER,
+  HealthDataType.BLOOD_OXYGEN: HealthDataUnit.PERCENT,
+  HealthDataType.BLOOD_PRESSURE_DIASTOLIC: HealthDataUnit.MILLIMETER_OF_MERCURY,
+  HealthDataType.BLOOD_PRESSURE_SYSTOLIC: HealthDataUnit.MILLIMETER_OF_MERCURY,
+  HealthDataType.BODY_FAT_PERCENTAGE: HealthDataUnit.PERCENT,
+  HealthDataType.LEAN_BODY_MASS: HealthDataUnit.KILOGRAM,
+  HealthDataType.BODY_MASS_INDEX: HealthDataUnit.NO_UNIT,
+  HealthDataType.BODY_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
+  HealthDataType.BODY_WATER_MASS: HealthDataUnit.KILOGRAM,
+  HealthDataType.DIETARY_CARBS_CONSUMED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_CAFFEINE: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_ENERGY_CONSUMED: HealthDataUnit.KILOCALORIE,
+  HealthDataType.DIETARY_FATS_CONSUMED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_PROTEIN_CONSUMED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_FIBER: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_SUGAR: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_FAT_MONOUNSATURATED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_FAT_POLYUNSATURATED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_FAT_SATURATED: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_CHOLESTEROL: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_A: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_THIAMIN: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_RIBOFLAVIN: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_NIACIN: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_PANTOTHENIC_ACID: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_B6: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_BIOTIN: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_B12: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_C: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_D: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_E: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_VITAMIN_K: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_FOLATE: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_CALCIUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_CHLORIDE: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_IRON: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_MAGNESIUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_PHOSPHORUS: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_POTASSIUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_SODIUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_ZINC: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_CHROMIUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_COPPER: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_IODINE: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_MANGANESE: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_MOLYBDENUM: HealthDataUnit.GRAM,
+  HealthDataType.DIETARY_SELENIUM: HealthDataUnit.GRAM,
 
-  AudiogramHealthValue({
-    required this.frequencies,
-    required this.leftEarSensitivities,
-    required this.rightEarSensitivities,
-  });
+  HealthDataType.ELECTRODERMAL_ACTIVITY: HealthDataUnit.SIEMEN,
+  HealthDataType.FORCED_EXPIRATORY_VOLUME: HealthDataUnit.LITER,
+  HealthDataType.HEART_RATE: HealthDataUnit.BEATS_PER_MINUTE,
+  HealthDataType.RESPIRATORY_RATE: HealthDataUnit.RESPIRATIONS_PER_MINUTE,
+  HealthDataType.PERIPHERAL_PERFUSION_INDEX: HealthDataUnit.PERCENT,
+  HealthDataType.HEIGHT: HealthDataUnit.METER,
+  HealthDataType.INSULIN_DELIVERY: HealthDataUnit.INTERNATIONAL_UNIT,
+  HealthDataType.RESTING_HEART_RATE: HealthDataUnit.BEATS_PER_MINUTE,
+  HealthDataType.STEPS: HealthDataUnit.COUNT,
+  HealthDataType.WAIST_CIRCUMFERENCE: HealthDataUnit.METER,
+  HealthDataType.WALKING_HEART_RATE: HealthDataUnit.BEATS_PER_MINUTE,
+  HealthDataType.WEIGHT: HealthDataUnit.KILOGRAM,
+  HealthDataType.DISTANCE_WALKING_RUNNING: HealthDataUnit.METER,
+  HealthDataType.DISTANCE_SWIMMING: HealthDataUnit.METER,
+  HealthDataType.DISTANCE_CYCLING: HealthDataUnit.METER,
+  HealthDataType.FLIGHTS_CLIMBED: HealthDataUnit.COUNT,
+  HealthDataType.DISTANCE_DELTA: HealthDataUnit.METER,
 
-  /// Create a [AudiogramHealthValue] based on a health data point from native data format.
-  factory AudiogramHealthValue.fromHealthDataPoint(dynamic dataPoint) =>
-      AudiogramHealthValue(
-          frequencies: List<num>.from(dataPoint['frequencies'] as List),
-          leftEarSensitivities:
-              List<num>.from(dataPoint['leftEarSensitivities'] as List),
-          rightEarSensitivities:
-              List<num>.from(dataPoint['rightEarSensitivities'] as List));
+  HealthDataType.WATER: HealthDataUnit.LITER,
+  HealthDataType.SLEEP_ASLEEP: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_AWAKE: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_AWAKE_IN_BED: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_DEEP: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_IN_BED: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_LIGHT: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_OUT_OF_BED: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_REM: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_SESSION: HealthDataUnit.MINUTE,
+  HealthDataType.SLEEP_UNKNOWN: HealthDataUnit.MINUTE,
 
-  @override
-  String toString() => """$runtimeType - frequencies: ${frequencies.toString()},
-    left ear sensitivities: ${leftEarSensitivities.toString()},
-    right ear sensitivities: ${rightEarSensitivities.toString()}""";
+  HealthDataType.MINDFULNESS: HealthDataUnit.MINUTE,
+  HealthDataType.EXERCISE_TIME: HealthDataUnit.MINUTE,
+  HealthDataType.WORKOUT: HealthDataUnit.NO_UNIT,
 
-  @override
-  Function get fromJsonFunction => _$AudiogramHealthValueFromJson;
-  factory AudiogramHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<AudiogramHealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$AudiogramHealthValueToJson(this);
+  HealthDataType.HEADACHE_NOT_PRESENT: HealthDataUnit.MINUTE,
+  HealthDataType.HEADACHE_MILD: HealthDataUnit.MINUTE,
+  HealthDataType.HEADACHE_MODERATE: HealthDataUnit.MINUTE,
+  HealthDataType.HEADACHE_SEVERE: HealthDataUnit.MINUTE,
+  HealthDataType.HEADACHE_UNSPECIFIED: HealthDataUnit.MINUTE,
 
-  @override
-  bool operator ==(Object other) =>
-      other is AudiogramHealthValue &&
-      listEquals(frequencies, other.frequencies) &&
-      listEquals(leftEarSensitivities, other.leftEarSensitivities) &&
-      listEquals(rightEarSensitivities, other.rightEarSensitivities);
+  HealthDataType.GENDER: HealthDataUnit.NO_UNIT,
+  HealthDataType.BIRTH_DATE: HealthDataUnit.NO_UNIT,
+  HealthDataType.BLOOD_TYPE: HealthDataUnit.NO_UNIT,
 
-  @override
-  int get hashCode =>
-      Object.hash(frequencies, leftEarSensitivities, rightEarSensitivities);
+  // Heart Rate events (specific to Apple Watch)
+  HealthDataType.HIGH_HEART_RATE_EVENT: HealthDataUnit.NO_UNIT,
+  HealthDataType.LOW_HEART_RATE_EVENT: HealthDataUnit.NO_UNIT,
+  HealthDataType.IRREGULAR_HEART_RATE_EVENT: HealthDataUnit.NO_UNIT,
+  HealthDataType.HEART_RATE_VARIABILITY_SDNN: HealthDataUnit.MILLISECOND,
+  HealthDataType.HEART_RATE_VARIABILITY_RMSSD: HealthDataUnit.MILLISECOND,
+  HealthDataType.ELECTROCARDIOGRAM: HealthDataUnit.VOLT,
+
+  HealthDataType.NUTRITION: HealthDataUnit.NO_UNIT,
+  HealthDataType.MENSTRUATION_FLOW: HealthDataUnit.NO_UNIT,
+  HealthDataType.WATER_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
+  HealthDataType.UNDERWATER_DEPTH: HealthDataUnit.METER,
+  HealthDataType.UV_INDEX: HealthDataUnit.COUNT,
+
+  // Health Connect
+  HealthDataType.TOTAL_CALORIES_BURNED: HealthDataUnit.KILOCALORIE,
+};
+
+// const PlatformTypeJsonValue = {
+//   PlatformType.IOS: 'ios',
+//   PlatformType.ANDROID: 'android',
+// };
+
+/// List of all [HealthDataUnit]s.
+enum HealthDataUnit {
+  // Mass units
+  GRAM,
+  KILOGRAM,
+  OUNCE,
+  POUND,
+  STONE,
+  // MOLE_UNIT_WITH_MOLAR_MASS, // requires molar mass input - not supported yet
+  // MOLE_UNIT_WITH_PREFIX_MOLAR_MASS, // requires molar mass & prefix input - not supported yet
+
+  // Length units
+  METER,
+  INCH,
+  FOOT,
+  YARD,
+  MILE,
+
+  // Volume units
+  LITER,
+  MILLILITER,
+  FLUID_OUNCE_US,
+  FLUID_OUNCE_IMPERIAL,
+  CUP_US,
+  CUP_IMPERIAL,
+  PINT_US,
+  PINT_IMPERIAL,
+
+  // Pressure units
+  PASCAL,
+  MILLIMETER_OF_MERCURY,
+  INCHES_OF_MERCURY,
+  CENTIMETER_OF_WATER,
+  ATMOSPHERE,
+  DECIBEL_A_WEIGHTED_SOUND_PRESSURE_LEVEL,
+
+  // Time units
+  SECOND,
+  MILLISECOND,
+  MINUTE,
+  HOUR,
+  DAY,
+
+  // Energy units
+  JOULE,
+  KILOCALORIE,
+  LARGE_CALORIE,
+  SMALL_CALORIE,
+
+  // Temperature units
+  DEGREE_CELSIUS,
+  DEGREE_FAHRENHEIT,
+  KELVIN,
+
+  // Hearing units
+  DECIBEL_HEARING_LEVEL,
+
+  // Frequency units
+  HERTZ,
+
+  // Electrical conductance units
+  SIEMEN,
+
+  // Potential units
+  VOLT,
+
+  // Pharmacology units
+  INTERNATIONAL_UNIT,
+
+  // Scalar units
+  COUNT,
+  PERCENT,
+
+  // Other units
+  BEATS_PER_MINUTE,
+  RESPIRATIONS_PER_MINUTE,
+  MILLIGRAM_PER_DECILITER,
+  UNKNOWN_UNIT,
+  NO_UNIT,
 }
 
-/// A [HealthValue] object for workouts
-///
-/// Parameters:
-/// * [workoutActivityType] - the type of workout
-/// * [totalEnergyBurned] - the total energy burned during the workout
-/// * [totalEnergyBurnedUnit] - the unit of the total energy burned
-/// * [totalDistance] - the total distance of the workout
-/// * [totalDistanceUnit] - the unit of the total distance
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class WorkoutHealthValue extends HealthValue {
-  /// The type of the workout.
-  HealthWorkoutActivityType workoutActivityType;
+/// List of [HealthWorkoutActivityType]s.
+enum HealthWorkoutActivityType {
+  // Commented for which platform the type are supported
 
-  /// The total energy burned during the workout.
-  /// Might not be available for all workouts.
-  int? totalEnergyBurned;
+  // Both
+  AMERICAN_FOOTBALL,
+  ARCHERY,
+  AUSTRALIAN_FOOTBALL,
+  BADMINTON,
+  BASEBALL,
+  BASKETBALL,
+  BIKING, // This also entails the iOS version where it is called CYCLING
+  BOXING,
+  CARDIO_DANCE,
+  CRICKET,
+  CROSS_COUNTRY_SKIING,
+  CURLING,
+  DOWNHILL_SKIING,
+  ELLIPTICAL,
+  FENCING,
+  GOLF,
+  GYMNASTICS,
+  HANDBALL,
+  HIGH_INTENSITY_INTERVAL_TRAINING,
+  HIKING,
+  HOCKEY,
+  JUMP_ROPE,
+  KICKBOXING,
+  MARTIAL_ARTS,
+  PILATES,
+  RACQUETBALL,
+  ROWING,
+  RUGBY,
+  RUNNING,
+  SAILING,
+  SKATING,
+  SNOWBOARDING,
+  SOCCER,
+  SOFTBALL,
+  SQUASH,
+  STAIR_CLIMBING,
+  SWIMMING,
+  TABLE_TENNIS,
+  TENNIS,
+  VOLLEYBALL,
+  WALKING,
+  WATER_POLO,
+  YOGA,
 
-  /// The unit of the total energy burned during the workout.
-  /// Might not be available for all workouts.
-  HealthDataUnit? totalEnergyBurnedUnit;
+  // iOS only
+  BARRE,
+  BOWLING,
+  CLIMBING,
+  COOLDOWN,
+  CORE_TRAINING,
+  CROSS_TRAINING,
+  DISC_SPORTS,
+  EQUESTRIAN_SPORTS,
+  FISHING,
+  FITNESS_GAMING,
+  FLEXIBILITY,
+  FUNCTIONAL_STRENGTH_TRAINING,
+  HAND_CYCLING,
+  HUNTING,
+  LACROSSE,
+  MIND_AND_BODY,
+  MIXED_CARDIO,
+  PADDLE_SPORTS,
+  PICKLEBALL,
+  PLAY,
+  PREPARATION_AND_RECOVERY,
+  SNOW_SPORTS,
+  SOCIAL_DANCE,
+  STAIRS,
+  STEP_TRAINING,
+  SURFING,
+  TAI_CHI,
+  TRACK_AND_FIELD,
+  TRADITIONAL_STRENGTH_TRAINING,
+  WATER_FITNESS,
+  WATER_SPORTS,
+  WHEELCHAIR_RUN_PACE,
+  WHEELCHAIR_WALK_PACE,
+  WRESTLING,
+  UNDERWATER_DIVING,
 
-  /// The total distance covered during the workout.
-  /// Might not be available for all workouts.
-  int? totalDistance;
+  // Android only
+  BIKING_STATIONARY,
+  CALISTHENICS,
+  DANCING,
+  FRISBEE_DISC,
+  GUIDED_BREATHING,
+  ICE_SKATING,
+  PARAGLIDING,
+  ROCK_CLIMBING, // on iOS this is the same as CLIMBING
+  ROWING_MACHINE,
+  RUNNING_TREADMILL, // on iOS this is the same as RUNNING
+  SCUBA_DIVING,
+  SKIING,
+  SNOWSHOEING,
+  STAIR_CLIMBING_MACHINE,
+  STRENGTH_TRAINING,
+  SWIMMING_OPEN_WATER,
+  SWIMMING_POOL,
+  WALKING_TREADMILL,
+  WEIGHTLIFTING,
+  WHEELCHAIR,
 
-  /// The unit of the total distance covered during the workout.
-  /// Might not be available for all workouts.
-  HealthDataUnit? totalDistanceUnit;
-
-  /// The total steps covered during the workout.
-  /// Might not be available for all workouts.
-  int? totalSteps;
-
-  /// The unit of the total steps covered during the workout.
-  /// Might not be available for all workouts.
-  HealthDataUnit? totalStepsUnit;
-
-  /// Serialized WorkoutKit workout plan, when available (iOS 17+).
-  Map<String, dynamic>? workoutPlan;
-
-  /// Serialized HKWorkoutEvents associated with the workout.
-  List<dynamic>? workoutEvents;
-
-  /// Serialized HKWorkoutActivities (per-activity breakdown).
-  List<dynamic>? workoutActivities;
-
-  WorkoutHealthValue(
-      {required this.workoutActivityType,
-      this.totalEnergyBurned,
-      this.totalEnergyBurnedUnit,
-      this.totalDistance,
-      this.totalDistanceUnit,
-      this.totalSteps,
-      this.totalStepsUnit,
-      this.workoutPlan,
-      this.workoutEvents,
-      this.workoutActivities});
-
-  /// Create a [WorkoutHealthValue] based on a health data point from native data format.
-  factory WorkoutHealthValue.fromHealthDataPoint(dynamic dataPoint) =>
-      WorkoutHealthValue(
-          workoutActivityType: HealthWorkoutActivityType.values.firstWhere(
-            (element) => element.name == dataPoint['workoutActivityType'],
-            orElse: () => HealthWorkoutActivityType.OTHER,
-          ),
-          totalEnergyBurned: dataPoint['totalEnergyBurned'] != null
-              ? (dataPoint['totalEnergyBurned'] as num).toInt()
-              : null,
-          totalEnergyBurnedUnit: dataPoint['totalEnergyBurnedUnit'] != null
-              ? HealthDataUnit.values.firstWhere((element) =>
-                  element.name == dataPoint['totalEnergyBurnedUnit'])
-              : null,
-          totalDistance: dataPoint['totalDistance'] != null
-              ? (dataPoint['totalDistance'] as num).toInt()
-              : null,
-          totalDistanceUnit: dataPoint['totalDistanceUnit'] != null
-              ? HealthDataUnit.values.firstWhere(
-                  (element) => element.name == dataPoint['totalDistanceUnit'])
-              : null,
-          totalSteps: dataPoint['totalSteps'] != null
-              ? (dataPoint['totalSteps'] as num).toInt()
-              : null,
-          totalStepsUnit: dataPoint['totalStepsUnit'] != null
-              ? HealthDataUnit.values.firstWhere(
-                  (element) => element.name == dataPoint['totalStepsUnit'])
-              : null,
-          workoutPlan: dataPoint['workout_plan'] != null
-              ? Map<String, dynamic>.from(
-                  dataPoint['workout_plan'] as Map<dynamic, dynamic>)
-              : null,
-          workoutEvents: dataPoint['workout_events'] != null
-              ? List<dynamic>.from(dataPoint['workout_events'] as List)
-              : null,
-          workoutActivities: dataPoint['workout_activities'] != null
-              ? List<dynamic>.from(dataPoint['workout_activities'] as List)
-              : null);
-
-  @override
-  Function get fromJsonFunction => _$WorkoutHealthValueFromJson;
-  factory WorkoutHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<WorkoutHealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$WorkoutHealthValueToJson(this);
-
-  @override
-  String toString() =>
-      """$runtimeType - workoutActivityType: ${workoutActivityType.name},
-           totalEnergyBurned: $totalEnergyBurned,
-           totalEnergyBurnedUnit: ${totalEnergyBurnedUnit?.name},
-           totalDistance: $totalDistance,
-           totalDistanceUnit: ${totalDistanceUnit?.name}
-           totalSteps: $totalSteps,
-           totalStepsUnit: ${totalStepsUnit?.name},
-           workoutPlan: $workoutPlan""";
-
-  @override
-  bool operator ==(Object other) =>
-      other is WorkoutHealthValue &&
-      workoutActivityType == other.workoutActivityType &&
-      totalEnergyBurned == other.totalEnergyBurned &&
-      totalEnergyBurnedUnit == other.totalEnergyBurnedUnit &&
-      totalDistance == other.totalDistance &&
-      totalDistanceUnit == other.totalDistanceUnit &&
-      totalSteps == other.totalSteps &&
-      totalStepsUnit == other.totalStepsUnit &&
-      mapEquals(workoutPlan, other.workoutPlan) &&
-      listEquals(workoutEvents, other.workoutEvents) &&
-      listEquals(workoutActivities, other.workoutActivities);
-
-  @override
-  int get hashCode => Object.hash(
-      workoutActivityType,
-      totalEnergyBurned,
-      totalEnergyBurnedUnit,
-      totalDistance,
-      totalDistanceUnit,
-      totalSteps,
-      totalStepsUnit,
-      workoutPlan,
-      workoutEvents,
-      workoutActivities);
+  //
+  OTHER,
 }
 
-/// A [HealthValue] object for ECGs
-///
-/// Parameters:
-/// * [voltageValues] - an array of [ElectrocardiogramVoltageValue]s
-/// * [averageHeartRate] - the average heart rate during the ECG (in BPM)
-/// * [samplingFrequency] - the frequency at which the Apple Watch sampled the voltage.
-/// * [classification] - an [ElectrocardiogramClassification]
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class ElectrocardiogramHealthValue extends HealthValue {
-  /// An array of [ElectrocardiogramVoltageValue]s.
-  List<ElectrocardiogramVoltageValue> voltageValues;
-
-  /// The average heart rate during the ECG (in BPM).
-  num? averageHeartRate;
-
-  /// The frequency at which the Apple Watch sampled the voltage.
-  double? samplingFrequency;
-
-  /// An [ElectrocardiogramClassification].
-  ElectrocardiogramClassification? classification;
-
-  ElectrocardiogramHealthValue({
-    required this.voltageValues,
-    this.averageHeartRate,
-    this.samplingFrequency,
-    this.classification,
-  });
-
-  @override
-  Function get fromJsonFunction => _$ElectrocardiogramHealthValueFromJson;
-  factory ElectrocardiogramHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<ElectrocardiogramHealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$ElectrocardiogramHealthValueToJson(this);
-
-  /// Create a [ElectrocardiogramHealthValue] based on a health data point from native data format.
-  factory ElectrocardiogramHealthValue.fromHealthDataPoint(dynamic dataPoint) =>
-      ElectrocardiogramHealthValue(
-        voltageValues: (dataPoint['voltageValues'] as List)
-            .map((voltageValue) =>
-                ElectrocardiogramVoltageValue.fromHealthDataPoint(voltageValue))
-            .toList(),
-        averageHeartRate: dataPoint['averageHeartRate'] as num?,
-        samplingFrequency: dataPoint['samplingFrequency'] as double?,
-        classification: ElectrocardiogramClassification.values
-            .firstWhere((c) => c.value == dataPoint['classification']),
-      );
-
-  @override
-  bool operator ==(Object other) =>
-      other is ElectrocardiogramHealthValue &&
-      voltageValues == other.voltageValues &&
-      averageHeartRate == other.averageHeartRate &&
-      samplingFrequency == other.samplingFrequency &&
-      classification == other.classification;
-
-  @override
-  int get hashCode => Object.hash(
-      voltageValues, averageHeartRate, samplingFrequency, classification);
-
-  @override
-  String toString() =>
-      '$runtimeType - ${voltageValues.length} values, $averageHeartRate BPM, $samplingFrequency HZ, $classification';
+enum MealType {
+  BREAKFAST,
+  LUNCH,
+  DINNER,
+  SNACK,
+  UNKNOWN,
 }
 
-/// Single voltage value belonging to a [ElectrocardiogramHealthValue]
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class ElectrocardiogramVoltageValue extends HealthValue {
-  /// Voltage of the ECG.
-  num voltage;
-
-  /// Time since the start of the ECG.
-  num timeSinceSampleStart;
-
-  ElectrocardiogramVoltageValue({
-    required this.voltage,
-    required this.timeSinceSampleStart,
-  });
-
-  /// Create a [ElectrocardiogramVoltageValue] based on a health data point from native data format.
-  factory ElectrocardiogramVoltageValue.fromHealthDataPoint(
-          dynamic dataPoint) =>
-      ElectrocardiogramVoltageValue(
-          voltage: dataPoint['voltage'] as num,
-          timeSinceSampleStart: dataPoint['timeSinceSampleStart'] as num);
-
-  @override
-  Function get fromJsonFunction => _$ElectrocardiogramVoltageValueFromJson;
-  factory ElectrocardiogramVoltageValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<ElectrocardiogramVoltageValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$ElectrocardiogramVoltageValueToJson(this);
-
-  @override
-  bool operator ==(Object other) =>
-      other is ElectrocardiogramVoltageValue &&
-      voltage == other.voltage &&
-      timeSinceSampleStart == other.timeSinceSampleStart;
-
-  @override
-  int get hashCode => Object.hash(voltage, timeSinceSampleStart);
-
-  @override
-  String toString() => '$runtimeType - voltage: $voltage';
+/// Classifications for ECG readings.
+enum ElectrocardiogramClassification {
+  NOT_SET,
+  SINUS_RHYTHM,
+  ATRIAL_FIBRILLATION,
+  INCONCLUSIVE_LOW_HEART_RATE,
+  INCONCLUSIVE_HIGH_HEART_RATE,
+  INCONCLUSIVE_POOR_READING,
+  INCONCLUSIVE_OTHER,
+  UNRECOGNIZED,
 }
 
-/// A [HealthValue] object from insulin delivery (iOS only)
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class InsulinDeliveryHealthValue extends HealthValue {
-  /// The amount of units of insulin taken
-  double units;
-
-  /// If it's basal, bolus or unknown reason for insulin dosage
-  InsulinDeliveryReason reason;
-
-  InsulinDeliveryHealthValue({
-    required this.units,
-    required this.reason,
-  });
-
-  factory InsulinDeliveryHealthValue.fromHealthDataPoint(dynamic dataPoint) {
-    final units = dataPoint['value'] as num;
-
-    final metadata = dataPoint['metadata'] == null
-        ? null
-        : Map<String, dynamic>.from(dataPoint['metadata'] as Map);
-    final reasonIndex =
-        metadata == null || !metadata.containsKey('HKInsulinDeliveryReason')
-            ? 0
-            : metadata['HKInsulinDeliveryReason'] as double;
-    final reason = InsulinDeliveryReason.values[reasonIndex.toInt()];
-
-    return InsulinDeliveryHealthValue(units: units.toDouble(), reason: reason);
-  }
-
-  @override
-  Function get fromJsonFunction => _$InsulinDeliveryHealthValueFromJson;
-  factory InsulinDeliveryHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<InsulinDeliveryHealthValue>(json);
-  @override
-  Map<String, dynamic> toJson() => _$InsulinDeliveryHealthValueToJson(this);
-
-  @override
-  bool operator ==(Object other) =>
-      other is InsulinDeliveryHealthValue &&
-      units == other.units &&
-      reason == other.reason;
-
-  @override
-  int get hashCode => Object.hash(units, reason);
-
-  @override
-  String toString() => '$runtimeType - units: $units, reason: $reason';
+/// Types of insulin delivery reason
+enum InsulinDeliveryReason {
+  NOT_SET,
+  BASAL,
+  BOLUS,
 }
 
-/// A [HealthValue] object for nutrition.
-///
-/// Parameters:
-///  * [mealType] - the type of meal
-///  * [name] - the name of the food
-///  * [b1Thiamine] - the amount of thiamine (B1) in grams
-///  * [b2Riboflavin] - the amount of riboflavin (B2) in grams
-///  * [b3Niacin] - the amount of niacin (B3) in grams
-///  * [b5PantothenicAcid] - the amount of pantothenic acid (B5) in grams
-///  * [b6Pyridoxine] - the amount of pyridoxine (B6) in grams
-///  * [b7Biotin] - the amount of biotin (B7) in grams
-///  * [b9Folate] - the amount of folate (B9) in grams
-///  * [b12Cobalamin] - the amount of cobalamin (B12) in grams
-///  * [caffeine] - the amount of caffeine in grams
-///  * [calcium] - the amount of calcium in grams
-///  * [calories] - the amount of calories in kcal
-///  * [carbs] - the amount of carbs in grams
-///  * [chloride] - the amount of chloride in grams
-///  * [cholesterol] - the amount of cholesterol in grams
-///  * [choline] - the amount of choline in grams
-///  * [chromium] - the amount of chromium in grams
-///  * [copper] - the amount of copper in grams
-///  * [fat] - the amount of fat in grams
-///  * [fatMonounsaturated] - the amount of monounsaturated fat in grams
-///  * [fatPolyunsaturated] - the amount of polyunsaturated fat in grams
-///  * [fatSaturated] - the amount of saturated fat in grams
-///  * [fatTransMonoenoic] - the amount of
-///  * [fatUnsaturated] - the amount of unsaturated fat in grams
-///  * [fiber] - the amount of fiber in grams
-///  * [iodine] - the amount of iodine in grams
-///  * [iron] - the amount of iron in grams
-///  * [magnesium] - the amount of magnesium in grams
-///  * [manganese] - the amount of manganese in grams
-///  * [molybdenum] - the amount of molybdenum in grams
-///  * [phosphorus] - the amount of phosphorus in grams
-///  * [potassium] - the amount of potassium in grams
-///  * [protein] - the amount of protein in grams
-///  * [selenium] - the amount of selenium in grams
-///  * [sodium] - the amount of sodium in grams
-///  * [sugar] - the amount of sugar in grams
-///  * [vitaminA] - the amount of vitamin A in grams
-///  * [vitaminC] - the amount of vitamin C in grams
-///  * [vitaminD] - the amount of vitamin D in grams
-///  * [vitaminE] - the amount of vitamin E in grams
-///  * [vitaminK] - the amount of vitamin K in grams
-///  * [water] - the amount of water in grams
-///  * [zinc] - the amount of zinc in grams
-
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class NutritionHealthValue extends HealthValue {
-  /// The name of the food.
-  String? name;
-
-  /// The type of meal.
-  String? meal_type;
-
-  /// The amount of calories in kcal.
-  double? calories;
-
-  /// The amount of protein in grams.
-  double? protein;
-
-  /// The amount of fat in grams.
-  double? fat;
-
-  /// The amount of carbs in grams.
-  double? carbs;
-
-  /// The amount of caffeine in grams.
-  double? caffeine;
-
-  /// The amount of vitamin A in grams.
-  double? vitaminA;
-
-  /// The amount of thiamine (B1) in grams.
-  double? b1Thiamine;
-
-  /// The amount of riboflavin (B2) in grams.
-  double? b2Riboflavin;
-
-  /// The amount of niacin (B3) in grams.
-  double? b3Niacin;
-
-  /// The amount of pantothenic acid (B5) in grams.
-  double? b5PantothenicAcid;
-
-  /// The amount of pyridoxine (B6) in grams.
-  double? b6Pyridoxine;
-
-  /// The amount of biotin (B7) in grams.
-  double? b7Biotin;
-
-  /// The amount of folate (B9) in grams.
-  double? b9Folate;
-
-  /// The amount of cobalamin (B12) in grams.
-  double? b12Cobalamin;
-
-  /// The amount of vitamin C in grams.
-  double? vitaminC;
-
-  /// The amount of vitamin D in grams.
-  double? vitaminD;
-
-  /// The amount of vitamin E in grams.
-  double? vitaminE;
-
-  /// The amount of vitamin K in grams.
-  double? vitaminK;
-
-  /// The amount of calcium in grams.
-  double? calcium;
-
-  /// The amount of chloride in grams.
-  double? chloride;
-
-  /// The amount of cholesterol in grams.
-  double? cholesterol;
-
-  /// The amount of choline in grams.
-  double? choline;
-
-  /// The amount of chromium in grams.
-  double? chromium;
-
-  /// The amount of copper in grams.
-  double? copper;
-
-  /// The amount of unsaturated fat in grams.
-  double? fatUnsaturated;
-
-  /// The amount of monounsaturated fat in grams.
-  double? fatMonounsaturated;
-
-  /// The amount of polyunsaturated fat in grams.
-  double? fatPolyunsaturated;
-
-  /// The amount of saturated fat in grams.
-  double? fatSaturated;
-
-  /// The amount of trans-monoenoic fat in grams.
-  double? fatTransMonoenoic;
-
-  /// The amount of fiber in grams.
-  double? fiber;
-
-  /// The amount of iodine in grams.
-  double? iodine;
-
-  /// The amount of iron in grams.
-  double? iron;
-
-  /// The amount of magnesium in grams.
-  double? magnesium;
-
-  /// The amount of manganese in grams.
-  double? manganese;
-
-  /// The amount of molybdenum in grams.
-  double? molybdenum;
-
-  /// The amount of phosphorus in grams.
-  double? phosphorus;
-
-  /// The amount of potassium in grams.
-  double? potassium;
-
-  /// The amount of selenium in grams.
-  double? selenium;
-
-  /// The amount of sodium in grams.
-  double? sodium;
-
-  /// The amount of sugar in grams.
-  double? sugar;
-
-  /// The amount of water in grams.
-  double? water;
-
-  /// The amount of zinc in grams.
-  double? zinc;
-
-  NutritionHealthValue({
-    this.name,
-    this.meal_type,
-    this.calories,
-    this.protein,
-    this.fat,
-    this.carbs,
-    this.caffeine,
-    this.vitaminA,
-    this.b1Thiamine,
-    this.b2Riboflavin,
-    this.b3Niacin,
-    this.b5PantothenicAcid,
-    this.b6Pyridoxine,
-    this.b7Biotin,
-    this.b9Folate,
-    this.b12Cobalamin,
-    this.vitaminC,
-    this.vitaminD,
-    this.vitaminE,
-    this.vitaminK,
-    this.calcium,
-    this.chloride,
-    this.cholesterol,
-    this.choline,
-    this.chromium,
-    this.copper,
-    this.fatUnsaturated,
-    this.fatMonounsaturated,
-    this.fatPolyunsaturated,
-    this.fatSaturated,
-    this.fatTransMonoenoic,
-    this.fiber,
-    this.iodine,
-    this.iron,
-    this.magnesium,
-    this.manganese,
-    this.molybdenum,
-    this.phosphorus,
-    this.potassium,
-    this.selenium,
-    this.sodium,
-    this.sugar,
-    this.water,
-    this.zinc,
-  });
-
-  @override
-  Function get fromJsonFunction => _$NutritionHealthValueFromJson;
-  factory NutritionHealthValue.fromJson(Map<String, dynamic> json) =>
-      (json) as NutritionHealthValue;
-  @override
-  Map<String, dynamic> toJson() => _$NutritionHealthValueToJson(this);
-
-  /// Create a [NutritionHealthValue] based on a health data point from native data format.
-  factory NutritionHealthValue.fromHealthDataPoint(dynamic dataPoint) {
-    dataPoint = dataPoint as Map<Object?, Object?>;
-    // where key is not null
-    final Map<String, Object?> dataPointMap = Map.fromEntries(dataPoint.entries
-        .where((entry) => entry.key != null)
-        .map((entry) => MapEntry(entry.key as String, entry.value)));
-    return _$NutritionHealthValueFromJson(dataPointMap);
-  }
-
-  @override
-  String toString() => """$runtimeType - protein: ${protein.toString()},
-    calories: ${calories.toString()},
-    fat: ${fat.toString()},
-    name: ${name.toString()},
-    carbs: ${carbs.toString()},
-    caffeine: ${caffeine.toString()},
-    mealType: $meal_type,
-    vitaminA: ${vitaminA.toString()},
-    b1Thiamine: ${b1Thiamine.toString()},
-    b2Riboflavin: ${b2Riboflavin.toString()},
-    b3Niacin: ${b3Niacin.toString()},
-    b5PantothenicAcid: ${b5PantothenicAcid.toString()},
-    b6Pyridoxine: ${b6Pyridoxine.toString()},
-    b7Biotin: ${b7Biotin.toString()},
-    b9Folate: ${b9Folate.toString()},
-    b12Cobalamin: ${b12Cobalamin.toString()},
-    vitaminC: ${vitaminC.toString()},
-    vitaminD: ${vitaminD.toString()},
-    vitaminE: ${vitaminE.toString()},
-    vitaminK: ${vitaminK.toString()},
-    calcium: ${calcium.toString()},
-    chloride: ${chloride.toString()},
-    cholesterol: ${cholesterol.toString()},
-    choline: ${choline.toString()},
-    chromium: ${chromium.toString()},
-    copper: ${copper.toString()},
-    unsaturatedFat: ${fatUnsaturated.toString()},
-    fatMonounsaturated: ${fatMonounsaturated.toString()},
-    fatPolyunsaturated: ${fatPolyunsaturated.toString()},
-    fatSaturated: ${fatSaturated.toString()},
-    fatTransMonoenoic: ${fatTransMonoenoic.toString()},
-    fiber: ${fiber.toString()},
-    iodine: ${iodine.toString()},
-    iron: ${iron.toString()},
-    magnesium: ${magnesium.toString()},
-    manganese: ${manganese.toString()},
-    molybdenum: ${molybdenum.toString()},
-    phosphorus: ${phosphorus.toString()},
-    potassium: ${potassium.toString()},
-    selenium: ${selenium.toString()},
-    sodium: ${sodium.toString()},
-    sugar: ${sugar.toString()},
-    water: ${water.toString()},
-    zinc: ${zinc.toString()}""";
-
-  @override
-  bool operator ==(Object other) =>
-      other is NutritionHealthValue &&
-      other.name == name &&
-      other.meal_type == meal_type &&
-      other.calories == calories &&
-      other.protein == protein &&
-      other.fat == fat &&
-      other.carbs == carbs &&
-      other.caffeine == caffeine &&
-      other.vitaminA == vitaminA &&
-      other.b1Thiamine == b1Thiamine &&
-      other.b2Riboflavin == b2Riboflavin &&
-      other.b3Niacin == b3Niacin &&
-      other.b5PantothenicAcid == b5PantothenicAcid &&
-      other.b6Pyridoxine == b6Pyridoxine &&
-      other.b7Biotin == b7Biotin &&
-      other.b9Folate == b9Folate &&
-      other.b12Cobalamin == b12Cobalamin &&
-      other.vitaminC == vitaminC &&
-      other.vitaminD == vitaminD &&
-      other.vitaminE == vitaminE &&
-      other.vitaminK == vitaminK &&
-      other.calcium == calcium &&
-      other.chloride == chloride &&
-      other.cholesterol == cholesterol &&
-      other.choline == choline &&
-      other.chromium == chromium &&
-      other.copper == copper &&
-      other.fatUnsaturated == fatUnsaturated &&
-      other.fatMonounsaturated == fatMonounsaturated &&
-      other.fatPolyunsaturated == fatPolyunsaturated &&
-      other.fatSaturated == fatSaturated &&
-      other.fatTransMonoenoic == fatTransMonoenoic &&
-      other.fiber == fiber &&
-      other.iodine == iodine &&
-      other.iron == iron &&
-      other.magnesium == magnesium &&
-      other.manganese == manganese &&
-      other.molybdenum == molybdenum &&
-      other.phosphorus == phosphorus &&
-      other.potassium == potassium &&
-      other.selenium == selenium &&
-      other.sodium == sodium &&
-      other.sugar == sugar &&
-      other.water == water &&
-      other.zinc == zinc;
-
-  @override
-  int get hashCode => Object.hashAll([
-        protein,
-        calories,
-        fat,
-        name,
-        carbs,
-        caffeine,
-        vitaminA,
-        b1Thiamine,
-        b2Riboflavin,
-        b3Niacin,
-        b5PantothenicAcid,
-        b6Pyridoxine,
-        b7Biotin,
-        b9Folate,
-        b12Cobalamin,
-        vitaminC,
-        vitaminD,
-        vitaminE,
-        vitaminK,
-        calcium,
-        chloride,
-        cholesterol,
-        choline,
-        chromium,
-        copper,
-        fatUnsaturated,
-        fatMonounsaturated,
-        fatPolyunsaturated,
-        fatSaturated,
-        fatTransMonoenoic,
-        fiber,
-        iodine,
-        iron,
-        magnesium,
-        manganese,
-        molybdenum,
-        phosphorus,
-        potassium,
-        selenium,
-        sodium,
-        sugar,
-        water,
-        zinc,
-      ]);
-}
-
-enum MenstrualFlow {
-  unspecified,
-  none,
-  light,
-  medium,
-  heavy,
-  spotting;
-
-  static MenstrualFlow fromHealthConnect(int value) {
-    switch (value) {
-      case 0:
-        return MenstrualFlow.unspecified;
-      case 1:
-        return MenstrualFlow.light;
-      case 2:
-        return MenstrualFlow.medium;
-      case 3:
-        return MenstrualFlow.heavy;
-      default:
-        return MenstrualFlow.unspecified;
-    }
-  }
-
-  static MenstrualFlow fromHealthKit(int value) {
-    switch (value) {
-      case 1:
-        return MenstrualFlow.unspecified;
-      case 2:
-        return MenstrualFlow.light;
-      case 3:
-        return MenstrualFlow.medium;
-      case 4:
-        return MenstrualFlow.heavy;
-      case 5:
-        return MenstrualFlow.none;
-      default:
-        return MenstrualFlow.unspecified;
-    }
-  }
-
-  static int toHealthConnect(MenstrualFlow value) {
-    switch (value) {
-      case MenstrualFlow.unspecified:
-        return 0;
-      case MenstrualFlow.light:
-        return 1;
-      case MenstrualFlow.medium:
-        return 2;
-      case MenstrualFlow.heavy:
-        return 3;
-      default:
-        return -1;
-    }
-  }
-}
-
-enum RecordingMethod {
-  unknown,
-  active,
-  automatic,
-  manual;
-
-  /// Create a [RecordingMethod] from an integer.
-  /// 0: unknown, 1: active, 2: automatic, 3: manual
-  /// If the integer is not in the range of 0-3, [RecordingMethod.unknown] is returned.
-  /// This is used to align the recording method with the platform.
-  static RecordingMethod fromInt(int? recordingMethod) {
-    switch (recordingMethod) {
-      case 0:
-        return RecordingMethod.unknown;
-      case 1:
-        return RecordingMethod.active;
-      case 2:
-        return RecordingMethod.automatic;
-      case 3:
-        return RecordingMethod.manual;
-      default:
-        return RecordingMethod.unknown;
-    }
-  }
-
-  /// Convert this [RecordingMethod] to an integer.
-  int toInt() {
-    switch (this) {
-      case RecordingMethod.unknown:
-        return 0;
-      case RecordingMethod.active:
-        return 1;
-      case RecordingMethod.automatic:
-        return 2;
-      case RecordingMethod.manual:
-        return 3;
-    }
-  }
-}
-
-/// A [HealthValue] object for menstrual flow.
-///
-/// Parameters:
-/// * [flowValue] - the flow value
-/// * [isStartOfCycle] - indicator whether or not this occurrence is the first day of the menstrual cycle (iOS only)
-/// * [wasUserEntered] - indicator whether or not the data was entered by the user (iOS only)
-/// * [dateTime] - the date and time of the menstrual flow
-@JsonSerializable(includeIfNull: false, explicitToJson: true)
-class MenstruationFlowHealthValue extends HealthValue {
-  final MenstrualFlow? flow;
-  final bool? isStartOfCycle;
-  final bool? wasUserEntered;
-  final DateTime dateTime;
-
-  MenstruationFlowHealthValue({
-    required this.flow,
-    required this.dateTime,
-    this.isStartOfCycle,
-    this.wasUserEntered,
-  });
-
-  @override
-  String toString() =>
-      "flow: ${flow?.name}, startOfCycle: $isStartOfCycle, wasUserEntered: $wasUserEntered, dateTime: $dateTime";
-
-  factory MenstruationFlowHealthValue.fromHealthDataPoint(dynamic dataPoint) {
-    // Parse flow value safely
-    final flowValueIndex = dataPoint['value'] as int? ?? 0;
-    MenstrualFlow? menstrualFlow;
-    if (Platform.isAndroid) {
-      menstrualFlow = MenstrualFlow.fromHealthConnect(flowValueIndex);
-    } else if (Platform.isIOS) {
-      menstrualFlow = MenstrualFlow.fromHealthKit(flowValueIndex);
-    }
-
-    return MenstruationFlowHealthValue(
-      flow: menstrualFlow,
-      isStartOfCycle:
-          dataPoint['metadata']?.containsKey('HKMenstrualCycleStart') == true
-              ? dataPoint['metadata']['HKMenstrualCycleStart'] == 1.0
-              : null,
-      wasUserEntered:
-          dataPoint['metadata']?.containsKey('HKWasUserEntered') == true
-              ? dataPoint['metadata']['HKWasUserEntered'] == 1.0
-              : null,
-      dateTime:
-          DateTime.fromMillisecondsSinceEpoch(dataPoint['date_from'] as int),
-    );
-  }
-
-  @override
-  Function get fromJsonFunction => _$MenstruationFlowHealthValueFromJson;
-
-  factory MenstruationFlowHealthValue.fromJson(Map<String, dynamic> json) =>
-      FromJsonFactory().fromJson<MenstruationFlowHealthValue>(json);
-
-  @override
-  Map<String, dynamic> toJson() => _$MenstruationFlowHealthValueToJson(this);
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is MenstruationFlowHealthValue &&
-            runtimeType == other.runtimeType &&
-            flow == other.flow &&
-            isStartOfCycle == other.isStartOfCycle &&
-            wasUserEntered == other.wasUserEntered &&
-            dateTime == other.dateTime;
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(flow, isStartOfCycle, wasUserEntered, dateTime);
+/// Extension to assign numbers to [ElectrocardiogramClassification]s
+extension ElectrocardiogramClassificationValue
+    on ElectrocardiogramClassification {
+  int get value => switch (this) {
+        ElectrocardiogramClassification.NOT_SET => 0,
+        ElectrocardiogramClassification.SINUS_RHYTHM => 1,
+        ElectrocardiogramClassification.ATRIAL_FIBRILLATION => 2,
+        ElectrocardiogramClassification.INCONCLUSIVE_LOW_HEART_RATE => 3,
+        ElectrocardiogramClassification.INCONCLUSIVE_HIGH_HEART_RATE => 4,
+        ElectrocardiogramClassification.INCONCLUSIVE_POOR_READING => 5,
+        ElectrocardiogramClassification.INCONCLUSIVE_OTHER => 6,
+        ElectrocardiogramClassification.UNRECOGNIZED => 100,
+      };
 }
