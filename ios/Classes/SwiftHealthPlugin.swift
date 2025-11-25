@@ -1083,12 +1083,12 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 planDictionary = await self.fetchWorkoutPlanDictionary(for: sample)
             }
 #endif
-            output.append(self.makeWorkoutDictionary(for: sample, planDictionary: planDictionary))
+            output.append(await self.makeWorkoutDictionary(for: sample, planDictionary: planDictionary))
         }
         return output
     }
     
-    private func makeWorkoutDictionary(for sample: HKWorkout, planDictionary: [String: Any]?) -> NSDictionary {
+    private func makeWorkoutDictionary(for sample: HKWorkout, planDictionary: [String: Any]?) async -> NSDictionary {
         var dict: [String: Any?] = [
             "uuid": "\(sample.uuid)",
             "workoutActivityType": workoutActivityTypeMap.first(where: { $0.value == sample.workoutActivityType })?.key,
@@ -1109,6 +1109,9 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         ]
         if #available(iOS 16.0, *) {
             dict["workout_activities"] = serializeWorkoutActivities(sample.workoutActivities)
+            if let strokeCount = await workoutStrokeCount(for: sample) {
+                dict["swimming_stroke_count"] = strokeCount
+            }
         }
         if let planDictionary = planDictionary {
             dict["workout_plan"] = planDictionary
@@ -1253,6 +1256,39 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         
         guard totalWeight > 0 else { return nil }
         return weightedSum / totalWeight
+    }
+    
+    @available(iOS 16.0, *)
+    private func workoutStrokeCount(for workout: HKWorkout) async -> Double? {
+        guard let strokeCountType = HKQuantityType.quantityType(forIdentifier: .swimmingStrokeCount) else {
+            return nil
+        }
+        
+        let predicate = HKQuery.predicateForSamples(
+            withStart: workout.startDate,
+            end: workout.endDate,
+            options: .strictStartDate
+        )
+        
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: strokeCountType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, result, error in
+                guard let result = result,
+                      let sumQuantity = result.sumQuantity(),
+                      error == nil else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                let totalStrokes = sumQuantity.doubleValue(for: HKUnit.count())
+                continuation.resume(returning: totalStrokes)
+            }
+            
+            healthStore.execute(query)
+        }
     }
     
     private func serializeWorkoutConfiguration(_ configuration: HKWorkoutConfiguration) -> [String: Any] {
