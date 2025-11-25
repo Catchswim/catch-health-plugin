@@ -1083,12 +1083,12 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 planDictionary = await self.fetchWorkoutPlanDictionary(for: sample)
             }
 #endif
-            output.append(await self.makeWorkoutDictionary(for: sample, planDictionary: planDictionary))
+            output.append(self.makeWorkoutDictionary(for: sample, planDictionary: planDictionary))
         }
         return output
     }
     
-    private func makeWorkoutDictionary(for sample: HKWorkout, planDictionary: [String: Any]?) async -> NSDictionary {
+    private func makeWorkoutDictionary(for sample: HKWorkout, planDictionary: [String: Any]?) -> NSDictionary {
         var dict: [String: Any?] = [
             "uuid": "\(sample.uuid)",
             "workoutActivityType": workoutActivityTypeMap.first(where: { $0.value == sample.workoutActivityType })?.key,
@@ -1109,7 +1109,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         ]
         if #available(iOS 16.0, *) {
             dict["workout_activities"] = serializeWorkoutActivities(sample.workoutActivities)
-            if let strokeCount = await workoutStrokeCount(for: sample) {
+            if let strokeCount = workoutStrokeCount(for: sample) {
                 dict["swimming_stroke_count"] = strokeCount
             }
         }
@@ -1259,36 +1259,35 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     }
     
     @available(iOS 16.0, *)
-    private func workoutStrokeCount(for workout: HKWorkout) async -> Double? {
+    private func workoutStrokeCount(for workout: HKWorkout) -> Double? {
         guard let strokeCountType = HKQuantityType.quantityType(forIdentifier: .swimmingStrokeCount) else {
             return nil
         }
-        
+
         let predicate = HKQuery.predicateForSamples(
             withStart: workout.startDate,
             end: workout.endDate,
             options: .strictStartDate
         )
-        
-        return await withCheckedContinuation { continuation in
-            let query = HKStatisticsQuery(
-                quantityType: strokeCountType,
-                quantitySamplePredicate: predicate,
-                options: .cumulativeSum
-            ) { _, result, error in
-                guard let result = result,
-                      let sumQuantity = result.sumQuantity(),
-                      error == nil else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                let totalStrokes = sumQuantity.doubleValue(for: HKUnit.count())
-                continuation.resume(returning: totalStrokes)
+
+        var totalStrokes: Double?
+        let semaphore = DispatchSemaphore(value: 0)
+        let query = HKStatisticsQuery(
+            quantityType: strokeCountType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) { _, result, error in
+            if let result = result,
+               let sumQuantity = result.sumQuantity(),
+               error == nil {
+                totalStrokes = sumQuantity.doubleValue(for: HKUnit.count())
             }
-            
-            healthStore.execute(query)
+            semaphore.signal()
         }
+
+        healthStore.execute(query)
+        _ = semaphore.wait(timeout: .now() + 5)
+        return totalStrokes
     }
     
     private func serializeWorkoutConfiguration(_ configuration: HKWorkoutConfiguration) -> [String: Any] {
