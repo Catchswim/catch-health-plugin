@@ -1089,9 +1089,10 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     }
     
     private func makeWorkoutDictionary(for sample: HKWorkout, planDictionary: [String: Any]?) -> NSDictionary {
+        let metadataLocation = metadataSwimmingLocationType(sample.metadata)
         var dict: [String: Any?] = [
             "uuid": "\(sample.uuid)",
-            "workoutActivityType": workoutActivityTypeMap.first(where: { $0.value == sample.workoutActivityType })?.key,
+            "workoutActivityType": workoutActivityTypeString(for: sample.workoutActivityType, swimmingLocationType: metadataLocation),
             "totalEnergyBurned": sample.totalEnergyBurned?.doubleValue(for: HKUnit.kilocalorie()),
             "totalEnergyBurnedUnit": "KILOCALORIE",
             "totalDistance": sample.totalDistance?.doubleValue(for: HKUnit.meter()),
@@ -1292,7 +1293,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     
     private func serializeWorkoutConfiguration(_ configuration: HKWorkoutConfiguration) -> [String: Any] {
         var payload: [String: Any] = [
-            "activityType": workoutActivityTypeMap.first(where: { $0.value == configuration.activityType })?.key ?? "OTHER",
+            "activityType": workoutActivityTypeString(for: configuration.activityType, swimmingLocationType: configuration.swimmingLocationType),
             "locationType": locationTypeString(configuration.locationType),
             "swimmingLocationType": swimmingLocationTypeString(configuration.swimmingLocationType)
         ]
@@ -1332,6 +1333,46 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         default: return "unknown"
         }
     }
+
+    private func workoutActivityTypeString(
+        for activityType: HKWorkoutActivityType,
+        swimmingLocationType: HKWorkoutSwimmingLocationType? = nil
+    ) -> String {
+        if activityType == .swimming {
+            if let swimmingLocationType = swimmingLocationType {
+                switch swimmingLocationType {
+                case .pool:
+                    return "SWIMMING_POOL"
+                case .openWater:
+                    return "SWIMMING_OPEN_WATER"
+                @unknown default:
+                    break
+                }
+            }
+            return "SWIMMING"
+        }
+        if let mapping = workoutActivityTypeMap.first(where: { $0.value == activityType }) {
+            return mapping.key
+        }
+        return "OTHER"
+    }
+
+    private func metadataSwimmingLocationType(_ metadata: [String: Any]?) -> HKWorkoutSwimmingLocationType? {
+        guard let metadata = metadata else { return nil }
+        if let numberValue = metadata[HKMetadataKeySwimmingLocationType] as? NSNumber {
+            return HKWorkoutSwimmingLocationType(rawValue: numberValue.intValue)
+        }
+        if let stringValue = metadata[HKMetadataKeySwimmingLocationType] as? String {
+            let lower = stringValue.lowercased()
+            if lower.contains("pool") {
+                return .pool
+            }
+            if lower.contains("open") {
+                return .openWater
+            }
+        }
+        return nil
+    }
     
 #if canImport(WorkoutKit)
     @available(iOS 17.0, *)
@@ -1358,18 +1399,23 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     private func serializeWorkoutPlanWorkout(_ workout: WorkoutKit.WorkoutPlan.Workout) -> [String: Any] {
         switch workout {
         case .goal(let goalWorkout):
+            let locationString = swimmingLocationTypeString(goalWorkout.swimmingLocation)
             return [
                 "type": "goal",
-                "activity": workoutActivityTypeMap.first(where: { $0.value == goalWorkout.activity })?.key ?? "OTHER",
+                "activity": workoutActivityTypeString(for: goalWorkout.activity, swimmingLocationType: goalWorkout.swimmingLocation),
                 "location": locationTypeString(goalWorkout.location),
-                "swimmingLocation": swimmingLocationTypeString(goalWorkout.swimmingLocation),
+                "swimmingLocation": locationString,
+                "swimmingLocationType": locationString,
                 "goal": serializeWorkoutGoal(goalWorkout.goal)
             ]
         case .custom(let customWorkout):
+            let locationString = swimmingLocationTypeString(customWorkout.swimmingLocation)
             return [
                 "type": "custom",
-                "activity": workoutActivityTypeMap.first(where: { $0.value == customWorkout.activity })?.key ?? "OTHER",
+                "activity": workoutActivityTypeString(for: customWorkout.activity, swimmingLocationType: customWorkout.swimmingLocation),
                 "location": locationTypeString(customWorkout.location),
+                "swimmingLocation": locationString,
+                "swimmingLocationType": locationString,
                 "displayName": customWorkout.displayName as Any,
                 "warmup": serializeWorkoutStep(customWorkout.warmup) as Any,
                 "blocks": customWorkout.blocks.map(serializeIntervalBlock),
@@ -1378,7 +1424,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         case .pacer(let pacer):
             return [
                 "type": "pacer",
-                "activity": workoutActivityTypeMap.first(where: { $0.value == pacer.activity })?.key ?? "OTHER",
+                "activity": workoutActivityTypeString(for: pacer.activity),
                 "location": locationTypeString(pacer.location),
                 "distance": measurementDictionary(pacer.distance),
                 "time": measurementDictionary(pacer.time)
@@ -1390,7 +1436,13 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 "activities": triWorkout.activities.map { activity in
                     switch activity {
                     case .swimming(let location):
-                        return ["segment": "swim", "swimmingLocation": swimmingLocationTypeString(location)]
+                        let locationString = swimmingLocationTypeString(location)
+                        return [
+                            "segment": "swim",
+                            "swimmingLocation": locationString,
+                            "swimmingLocationType": locationString,
+                            "activityType": workoutActivityTypeString(for: .swimming, swimmingLocationType: location)
+                        ]
                     case .cycling(let location):
                         return ["segment": "bike", "location": locationTypeString(location)]
                     case .running(let location):
