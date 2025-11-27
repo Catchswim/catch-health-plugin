@@ -400,6 +400,12 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                     typesToRead.insert(dataType)
                     typesToWrite.insert(dataType)
                 }
+                if key == WORKOUT && (access == 0 || access == 2) {
+                    if #available(iOS 10.0, *),
+                       let strokeCountType = HKObjectType.quantityType(forIdentifier: .swimmingStrokeCount) {
+                        typesToRead.insert(strokeCountType)
+                    }
+                }
                 if let characteristicsType = characteristicsTypesDict[key] {
                     let access = permissions[index]
                     switch access {
