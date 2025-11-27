@@ -1326,7 +1326,10 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    private func swimmingLocationTypeString(_ type: HKWorkoutSwimmingLocationType) -> String {
+    private func swimmingLocationTypeString(_ type: HKWorkoutSwimmingLocationType?) -> String {
+        guard let type = type else {
+            return "unknown"
+        }
         switch type {
         case .openWater: return "openWater"
         case .pool: return "pool"
@@ -1409,12 +1412,12 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 "goal": serializeWorkoutGoal(goalWorkout.goal)
             ]
         case .custom(let customWorkout):
-            let locationString = swimmingLocationTypeString(customWorkout.swimmingLocation)
+            let swimmingLocationType: HKWorkoutSwimmingLocationType? = nil
+            let locationString = swimmingLocationTypeString(swimmingLocationType)
             return [
                 "type": "custom",
-                "activity": workoutActivityTypeString(for: customWorkout.activity, swimmingLocationType: customWorkout.swimmingLocation),
+                "activity": workoutActivityTypeString(for: customWorkout.activity, swimmingLocationType: swimmingLocationType),
                 "location": locationTypeString(customWorkout.location),
-                "swimmingLocation": locationString,
                 "swimmingLocationType": locationString,
                 "displayName": customWorkout.displayName as Any,
                 "warmup": serializeWorkoutStep(customWorkout.warmup) as Any,
